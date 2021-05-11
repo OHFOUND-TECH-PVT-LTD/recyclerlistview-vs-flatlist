@@ -1,0 +1,12 @@
+{
+  "name": "recyclerlistview-vs-flatlist",
+  "displayName": "recyclerlistview-vs-flatlist",
+  "expo": {
+    "name": "recyclerlistview-vs-flatlist",
+    "slug": "recyclerlistview-vs-flatlist",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
