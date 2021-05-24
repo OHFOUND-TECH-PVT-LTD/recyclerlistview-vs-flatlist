@@ -3,7 +3,16 @@
  A scrollable list with different item type
  */
 import React, { Component } from "react";
-import { View, Text, Dimensions, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  Dimensions,
+  FlatList,
+  Button,
+  TextInput,
+  Alert,
+  TouchableOpacity,
+} from "react-native";
 
 const ViewTypes = {
   FULL: 0,
@@ -31,7 +40,7 @@ class CellContainer extends React.Component {
 /***
  * To test out just copy this component and render in you root component
  */
-export default class RecycleTestComponent extends React.Component {
+export default class RecyclerListViewWrapper extends React.Component {
   constructor(args) {
     super(args);
 
@@ -40,6 +49,7 @@ export default class RecycleTestComponent extends React.Component {
     //Since component should always render once data has changed, make data provider part of the state
     this.state = {
       dataProvider: this._generateArray(300),
+      refreshing: false,
     };
   }
 
@@ -58,16 +68,16 @@ export default class RecycleTestComponent extends React.Component {
       // define width/height
       let _width = width;
       let _height = 140;
-    //   if (type === ViewTypes.HALF_LEFT) {
-    //     _width = width / 2;
-    //     _height = 160;
-    //   } else if (type === ViewTypes.HALF_RIGHT) {
-    //     _width = width / 2;
-    //     _height = 160;
-    //   } else if (type === ViewTypes.FULL) {
-    //     _width = width;
-    //     _height = 140;
-    //   }
+      //   if (type === ViewTypes.HALF_LEFT) {
+      //     _width = width / 2;
+      //     _height = 160;
+      //   } else if (type === ViewTypes.HALF_RIGHT) {
+      //     _width = width / 2;
+      //     _height = 160;
+      //   } else if (type === ViewTypes.FULL) {
+      //     _width = width;
+      //     _height = 140;
+      //   }
       arr[i] = {
         id: `flatlist-${i}`,
         type,
@@ -98,7 +108,20 @@ export default class RecycleTestComponent extends React.Component {
       case ViewTypes.FULL:
         return (
           <CellContainer style={[styles.container, { width, height }]}>
-            <Text>Data: {data}</Text>
+            <TextInput
+              placeholder="Search States"
+              autoCorrect={false}
+              clearButtonMode="always"
+              autoCapitalize="none"
+              backgroundColor={"#fff"}
+            />
+            <Button
+              title="Submit"
+              color={"#000"}
+              onPress={() => {
+                Alert.alert(`${data}`);
+              }}
+            />
           </CellContainer>
         );
       default:
@@ -106,12 +129,67 @@ export default class RecycleTestComponent extends React.Component {
     }
   }
 
+  setRefreshing(flag) {
+    this.setState({
+      refreshing: flag,
+    });
+  }
+
+  setData(data) {
+    this.setState({
+      dataProvider: data,
+    });
+  }
+
+  setFlag(flag) {
+    this.setState({
+      flag,
+    });
+  }
+
   render() {
     return (
       <FlatList
+        ListHeaderComponent={() => <Text>header</Text>}
+        ListFooterComponent={() => (
+          <View style={{ flex: 1 }}>
+            <TouchableOpacity
+              onPress={() => {
+               this. setData(this._generateArray(this.state.dataProvider.length + 300));
+              }}
+            >
+              <Text>Reload</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                this.setFlag(this.state.flag + 1);
+              }}
+            >
+              <Text>Re-Render</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        ListEmptyComponent={<Text>empty</Text>}
+        ItemSeparatorComponent={() => <Text>Seprate</Text>}
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="on-drag"
         data={this.state.dataProvider}
         keyExtractor={(item) => item.id}
         renderItem={this._rowRenderer}
+        style={{ padding: 10 }}
+        contentContainerStyle={{ borderWidth: 1 }}
+        extraData={this.state.flag}
+        refreshing={this.state.refreshing}
+        onRefresh={() => {
+          this.setRefreshing(true);
+          setTimeout(() => {
+            this.setRefreshing(false);
+          }, 2000);
+        }}
+        onEndReached={() => {
+          Alert.alert("end");
+        }}
+        onEndReachedThreshold={0}
       />
     );
   }
