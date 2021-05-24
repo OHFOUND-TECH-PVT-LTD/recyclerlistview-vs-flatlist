@@ -40,7 +40,7 @@ class CellContainer extends React.Component {
 /***
  * To test out just copy this component and render in you root component
  */
-export default class RecyclerListViewWrapper extends React.Component {
+export default class FlatListViewWrapper extends React.Component {
   constructor(args) {
     super(args);
 

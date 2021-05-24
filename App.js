@@ -13,9 +13,9 @@ import {
   Alert,
 } from "react-native";
 
-import FlatListTestComponent from "./FlatList";
+import FlatListViewWrapper from "./FlatList";
 import FlatList2 from "./FlatList2";
-import RecyclerListViewWrapper, { ViewTypes } from "./RecyclerListView";
+import RecyclerListViewWrapper, { ViewTypes } from "./src/RecyclerListViewWrapper";
 import RecyclerListView2 from "./RecyclerListView2";
 
 let containerCount = 0;
@@ -70,7 +70,7 @@ export default function App() {
   };
 
   if (listType == "FlatList") {
-    return <FlatListTestComponent />;
+    return <FlatListViewWrapper />;
   }
 
   if (listType == "RecyclerListView") {
