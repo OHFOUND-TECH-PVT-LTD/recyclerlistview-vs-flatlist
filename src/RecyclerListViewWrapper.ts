@@ -5,7 +5,6 @@
 import React from "react";
 import {
   View,
-  ViewPropTypes,
   RefreshControl,
   StyleProp,
   ViewStyle,
@@ -16,6 +15,7 @@ import {
   LayoutProvider,
   RecyclerListViewProps,
 } from "recyclerlistview"; // 1.1.0
+import { RecyclerListViewState } from "recyclerlistview/dist/reactnative/core/RecyclerListView";
 
 export enum ViewTypes {
   FULL,
@@ -155,7 +155,7 @@ export interface RecyclerListViewWrapperProps<ItemT>
   refreshing?: boolean | null;
 }
 
-interface IState {
+interface RecyclerListViewWrapperState extends RecyclerListViewState {
   dataProvider: DataProvider;
   itemsCount: number;
 }
@@ -165,7 +165,7 @@ interface IState {
  */
 export default class RecyclerListViewWrapper<
   ItemT = any
-> extends React.PureComponent<RecyclerListViewWrapperProps<ItemT>, IState> {
+> extends React.PureComponent<RecyclerListViewWrapperProps<ItemT>, RecyclerListViewWrapperState> {
   constructor(args) {
     super(args);
 
@@ -302,60 +302,60 @@ export default class RecyclerListViewWrapper<
 
   //Given type and data return the view component
   _rowRenderer(type: ViewTypes, data, index: number) {
-    // //You can return any view here, CellContainer has no special significance
-    // const {
-    //   props: { renderItem, data: list, keyExtractor },
-    // } = this;
-    // const item = renderItem({ item: list[index], index, type }) || null;
-    // const key =
-    //   typeof keyExtractor === "function"
-    //     ? keyExtractor(list[index], index, type)
-    //     : item.key || index;
-    // switch (type) {
-    //   case ViewTypes.HEADER:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {this.headerElement || null}
-    //         {item}
-    //       </View>
-    //     );
-    //   case ViewTypes.HEADER_WITH_SEPRATOR:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {this.headerElement || null}
-    //         {item}
-    //         {this.separatorElement || null}
-    //       </View>
-    //     );
-    //   case ViewTypes.FOOTER:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {item}
-    //         {this.footerElement || null}
-    //       </View>
-    //     );
-    //   case ViewTypes.FULL_WITH_SEPRATOR:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {item}
-    //         {this.separatorElement || null}
-    //       </View>
-    //     );
-    //   case ViewTypes.FULL:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {item}
-    //       </View>
-    //     );
-    //   case ViewTypes.EMPTY:
-    //     return (
-    //       <View key={key} style={{ flex: 1 }}>
-    //         {this.emptyElement || null}
-    //       </View>
-    //     );
-    //   default:
+    //You can return any view here, CellContainer has no special significance
+    const {
+      props: { renderItem, data: list, keyExtractor },
+    } = this;
+    const item = renderItem({ item: list[index], index, type }) || null;
+    const key =
+      typeof keyExtractor === "function"
+        ? keyExtractor(list[index], index, type)
+        : item.key || index;
+    switch (type) {
+      case ViewTypes.HEADER:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {this.headerElement || null}
+            {item}
+          </View>
+        );
+      case ViewTypes.HEADER_WITH_SEPRATOR:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {this.headerElement || null}
+            {item}
+            {this.separatorElement || null}
+          </View>
+        );
+      case ViewTypes.FOOTER:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {item}
+            {this.footerElement || null}
+          </View>
+        );
+      case ViewTypes.FULL_WITH_SEPRATOR:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {item}
+            {this.separatorElement || null}
+          </View>
+        );
+      case ViewTypes.FULL:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {item}
+          </View>
+        );
+      case ViewTypes.EMPTY:
+        return (
+          <View key={key} style={{ flex: 1 }}>
+            {this.emptyElement || null}
+          </View>
+        );
+      default:
         return null;
-    // }
+    }
   }
 
   render() {
@@ -373,7 +373,7 @@ export default class RecyclerListViewWrapper<
     } = this;
 
     return (
-      <RecyclerListView
+      <RecyclerListView<RecyclerListViewWrapperProps<ItemT>, RecyclerListViewWrapperState>
         scrollViewProps={{
           keyboardShouldPersistTaps,
           keyboardDismissMode,
