@@ -4,7 +4,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { View, RefreshControl, Dimensions, Text, TextInput, Button, Alert } from "react-native";
+import { RefreshControl } from "react-native";
 import {
   RecyclerListView,
   DataProvider,
@@ -158,7 +158,7 @@ const RecyclerListViewWrapper = ({
         return (
           <>
             {headerElement || null}
-            <Text>{item}</Text>
+            {item}
           </>
         );
       case ViewTypes.HEADER_WITH_SEPRATOR:
