@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { RecyclerListView, DataProvider } from 'recyclerlistview';
-import { DataCall } from './utils/DataCall';
-import { LayoutUtil } from './utils/LayoutUtil';
-import { ImageRenderer } from './components/ImageRenderer';
-import { ViewSelector } from './components/ViewSelector';
+import { DataCall } from './../utils/DataCall';
+import { LayoutUtil } from './../utils/LayoutUtil';
+import { ImageRenderer } from './../components/ImageRenderer';
 
 export default class RecyclerListView2 extends Component {
   constructor(props) { 

@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, ActivityIndicator, FlatList } from 'react-native';
-import { DataCall } from './utils/DataCall';
-import { LayoutUtil } from './utils/LayoutUtil';
-import { ImageRenderer } from './components/ImageRenderer';
+import { DataCall } from './../utils/DataCall';
+import { LayoutUtil } from './../utils/LayoutUtil';
+import { ImageRenderer } from './../components/ImageRenderer';
 
 export default class FlatList2 extends Component {
   constructor(props) { 

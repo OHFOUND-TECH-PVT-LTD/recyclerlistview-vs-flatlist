@@ -11,12 +11,14 @@ import {
   BackHandler,
   Dimensions,
   Alert,
+  TextInput,
 } from "react-native";
 
-import FlatListViewWrapper from "./FlatList";
-import FlatList2 from "./FlatList2";
+import FlatListViewWrapper from "./examples/FlatList";
+import FlatList2 from "./examples/FlatList2";
+import RecyclerListView from "./examples/RecyclerListView";
 import RecyclerListViewWrapper, { ViewTypes } from "./src/RecyclerListViewWrapper";
-import RecyclerListView2 from "./RecyclerListView2";
+import RecyclerListView2 from "./examples/RecyclerListView2";
 
 let containerCount = 0;
 
@@ -74,6 +76,10 @@ export default function App() {
   }
 
   if (listType == "RecyclerListView") {
+    return <RecyclerListView />;
+  }
+
+  if (listType == "RecyclerListViewWrapper") {
     return (
       <RecyclerListViewWrapper
         data={data}
@@ -89,11 +95,35 @@ export default function App() {
             }
           >
             <Text>Data: {item}</Text>
+            <TextInput
+              placeholder="Search States"
+              autoCorrect={false}
+              clearButtonMode="always"
+              autoCapitalize="none"
+              backgroundColor={"#fff"}
+            />
+            <Button
+              title="Submit"
+              color={"#000"}
+              onPress={() => {
+                Alert.alert(`${data}`);
+              }}
+            />
           </CellContainer>
         )}
+        recyclerListViewProps={{
+          scrollViewProps: {
+            keyboardShouldPersistTaps: "always",
+            keyboardDismissMode: "on-drag",
+            contentContainerStyle: { borderWidth: 1 },
+          },
+          style: { padding: 10 },
+          onEndReached: () => {
+            Alert.alert('end');
+          },
+          onEndReachedThreshold: 0,
+        }}
         keyExtractor={(item, index) => `recycleListViewList-${index}`}
-        keyboardShouldPersistTaps="always"
-        keyboardDismissMode="on-drag"
         ListHeaderComponent={() => (
           <Text style={{ color: "#000" }}>header</Text>
         )}
@@ -120,8 +150,6 @@ export default function App() {
           <Text style={{ color: "#000" }}>Seprate</Text>
         )}
         setElementDimensions={(type, index) => ({ width, height: 140 })}
-        style={{ padding: 10 }}
-        contentContainerStyle={{ borderWidth: 1 }}
         extraData={flag}
         refreshing={refreshing}
         onRefresh={() => {
@@ -130,10 +158,6 @@ export default function App() {
             setRefreshing(false);
           }, 2000);
         }}
-        onEndReached={() => {
-          Alert.alert('end');
-        }}
-        onEndReachedThreshold={0}
       />
     );
   }
@@ -163,6 +187,15 @@ export default function App() {
             setListType("RecyclerListView");
           }}
           title="RecyclerListView"
+        />
+        <View>
+          <Text>VS</Text>
+        </View>
+        <Button
+          onPress={() => {
+            setListType("RecyclerListViewWrapper");
+          }}
+          title="RecyclerListViewWrapper"
         />
         <StatusBar style="auto" />
         <View style={{ height: 50 }} />

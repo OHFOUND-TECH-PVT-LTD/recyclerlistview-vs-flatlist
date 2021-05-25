@@ -4,7 +4,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { View, ViewPropTypes, RefreshControl } from "react-native";
+import { View, RefreshControl, Dimensions, Text, TextInput, Button, Alert } from "react-native";
 import {
   RecyclerListView,
   DataProvider,
@@ -23,226 +23,198 @@ export const ViewTypes = {
 /***
  * To test out just copy this component and render in you root component
  */
-export default class RecyclerListViewWrapper extends React.PureComponent {
-  constructor(args) {
-    super(args);
+const RecyclerListViewWrapper = ({
+  data = [],
+  extraData,
+  recyclerListViewProps = {},
+  recyclerListViewProps: { scrollViewProps = {} } = {},
+  refreshing,
+  onRefresh,
+  ListHeaderComponent,
+  ListFooterComponent,
+  ListEmptyComponent,
+  ItemSeparatorComponent,
+  setElementDimensions,
+  renderItem,
+  // keyExtractor,
+}) => {
+  // let { width } = Dimensions.get("window");
 
-    //Define some additional element
-    const {
-      props: {
-        ListHeaderComponent,
-        ListFooterComponent,
-        ListEmptyComponent,
-        ItemSeparatorComponent,
-        setElementDimensions,
-        data,
+  //Create the data provider and provide method which takes in two rows of data and return if those two are different or not.
+  //THIS IS VERY IMPORTANT, FORGET PERFORMANCE IF THIS IS MESSED UP
+  let dataProviderInstance = new DataProvider((r1, r2) => {
+    // console.log(r1);
+    // console.log(r2);
+    return r1 !== r2;
+  });
+
+  const [dataProvider, setDataProvider] = React.useState(
+    dataProviderInstance.cloneWithRows(data)
+  );
+  const [itemsCount, setItemsCount] = React.useState(data.length);
+
+  let headerElement = null;
+  if (ListHeaderComponent) {
+    headerElement = React.isValidElement(ListHeaderComponent) ? (
+      ListHeaderComponent
+    ) : (
+      <ListHeaderComponent />
+    );
+  }
+
+  let footerElement = null;
+  if (ListFooterComponent) {
+    footerElement = React.isValidElement(ListFooterComponent) ? (
+      ListFooterComponent
+    ) : (
+      <ListFooterComponent />
+    );
+  }
+
+  let separatorElement = null;
+  if (ItemSeparatorComponent) {
+    separatorElement = React.isValidElement(ItemSeparatorComponent) ? (
+      ItemSeparatorComponent
+    ) : (
+      <ItemSeparatorComponent />
+    );
+  }
+
+  let emptyElement = null;
+  if (ListEmptyComponent) {
+    emptyElement = React.isValidElement(ListEmptyComponent) ? (
+      ListEmptyComponent
+    ) : (
+      <ListEmptyComponent />
+    );
+  }
+
+  React.useEffect(
+    () => {
+      //Since component should always render once data has changed, make data provider part of the state
+      setDataProvider(dataProviderInstance.cloneWithRows(data));
+      setItemsCount(data.length);
+    },
+    [data, extraData]
+  );
+
+  //Create the layout provider
+  //First method: Given an index return the type of item e.g ListItemType1, ListItemType2 in case you have variety of items in your list/grid
+  //Second: Given a type and object set the exact height and width for that type on given object, if you're using non deterministic rendering provide close estimates
+  //If you need data based check you can access your data provider here
+  //You'll need data in most cases, we don't provide it by default to enable things like data virtualization in the future
+  //NOTE: For complex lists LayoutProvider will also be complex it would then make sense to move it to a different file
+  const _layoutProvider = React.useCallback(() => {
+    return new LayoutProvider(
+      (index) => {
+        let isFirst = index == 0;
+        let isLast = index + 1 == itemsCount;
+        let isEmpty = !itemsCount;
+        let isHeader = isFirst;
+        let isFooter = isLast;
+        let isSeparator = !isLast;
+        if (isEmpty) {
+          return ViewTypes.EMPTY;
+        } else if (isHeader && isSeparator) {
+          return ViewTypes.HEADER_WITH_SEPRATOR;
+        } else if (isHeader) {
+          return ViewTypes.HEADER;
+        } else if (isFooter) {
+          return ViewTypes.FOOTER;
+        } else if (isSeparator) {
+          return ViewTypes.FULL_WITH_SEPRATOR;
+        } else {
+          return ViewTypes.FULL;
+        }
       },
-    } = this;
-
-    if (ListHeaderComponent) {
-      this.headerElement = React.isValidElement(ListHeaderComponent) ? (
-        ListHeaderComponent
-      ) : (
-        <ListHeaderComponent />
-      );
-    }
-
-    if (ListFooterComponent) {
-      this.footerElement = React.isValidElement(ListFooterComponent) ? (
-        ListFooterComponent
-      ) : (
-        <ListFooterComponent />
-      );
-    }
-
-    if (ItemSeparatorComponent) {
-      this.separatorElement = React.isValidElement(ItemSeparatorComponent) ? (
-        ItemSeparatorComponent
-      ) : (
-        <ItemSeparatorComponent />
-      );
-    }
-
-    if (ListEmptyComponent) {
-      this.emptyElement = React.isValidElement(ListEmptyComponent) ? (
-        ListEmptyComponent
-      ) : (
-        <ListEmptyComponent />
-      );
-    }
-
-    //Create the data provider and provide method which takes in two rows of data and return if those two are different or not.
-    //THIS IS VERY IMPORTANT, FORGET PERFORMANCE IF THIS IS MESSED UP
-    let dataProvider = new DataProvider((r1, r2) => {
-      return r1 !== r2;
-    });
-
-    //Since component should always render once data has changed, make data provider part of the state
-    this.state = {
-      dataProvider: dataProvider.cloneWithRows(data),
-      itemsCount: data.length,
-    };
-
-    //Create the layout provider
-    //First method: Given an index return the type of item e.g ListItemType1, ListItemType2 in case you have variety of items in your list/grid
-    //Second: Given a type and object set the exact height and width for that type on given object, if you're using non deterministic rendering provide close estimates
-    //If you need data based check you can access your data provider here
-    //You'll need data in most cases, we don't provide it by default to enable things like data virtualization in the future
-    //NOTE: For complex lists LayoutProvider will also be complex it would then make sense to move it to a different file
-    this._layoutProvider = () => {
-      const {
-        state: { itemsCount },
-      } = this;
-      return new LayoutProvider(
-        (index) => {
-          let isFirst = index == 0;
-          let isLast = index + 1 == itemsCount;
-          let isEmpty = !itemsCount;
-          let isHeader = isFirst;
-          let isFooter = isLast;
-          let isSeparator = !isLast;
-          if (isEmpty) {
-            return ViewTypes.EMPTY;
-          } else if (isHeader && isSeparator) {
-            return ViewTypes.HEADER_WITH_SEPRATOR;
-          } else if (isHeader) {
-            return ViewTypes.HEADER;
-          } else if (isFooter) {
-            return ViewTypes.FOOTER;
-          } else if (isSeparator) {
-            return ViewTypes.FULL_WITH_SEPRATOR;
-          } else {
-            return ViewTypes.FULL;
+      (type, dim, index) => {
+        if (
+          setElementDimensions &&
+          typeof setElementDimensions === "function"
+        ) {
+          const { width, height } = setElementDimensions(type, index) ?? {};
+          if (typeof width === "number") {
+            dim.width = width;
           }
-        },
-        (type, dim, index) => {
-          if (
-            setElementDimensions &&
-            typeof setElementDimensions === "function"
-          ) {
-            const { width, height } = setElementDimensions(type, index) ?? {};
-            if (typeof width === "number") {
-              dim.width = width;
-            }
-            if (typeof height === "number") {
-              dim.height = height;
-            }
+          if (typeof height === "number") {
+            dim.height = height;
           }
         }
-      );
-    };
-
-    this._rowRenderer = this._rowRenderer.bind(this);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const {
-      props: { data = [], extraData },
-    } = this;
-    //Since component should always render once data has changed, make data provider part of the state
-    if (
-      nextProps.data !== this.props.data ||
-      nextProps.extraData !== this.props.extraData
-    ) {
-      this.setState({
-        dataProvider: dataProvider.cloneWithRows(data),
-        itemsCount: data.length,
-      });
-    }
-  }
+      }
+    );
+  }, []);
 
   //Given type and data return the view component
-  _rowRenderer(type, data, index) {
+  const _rowRenderer = React.useCallback((type, rowData, index) => {
     //You can return any view here, CellContainer has no special significance
-    const {
-      props: { renderItem, data: list, keyExtractor },
-    } = this;
-    const item = renderItem({ item: list[index], index, type }) || null;
-    const key =
-      typeof keyExtractor === "function"
-        ? keyExtractor(list[index], index, type)
-        : list[index].key || item.key || index;
+    const item = renderItem({ item: data[index], index, type }) || null;
+    // console.log(rowData);
+    // const key =
+    //   typeof keyExtractor === "function"
+    //     ? keyExtractor(data[index], index, type)
+    //     : data[index].key || item.key || index;
     switch (type) {
       case ViewTypes.HEADER:
         return (
-          <View key={key} style={{ flex: 1 }}>
-            {this.headerElement || null}
-            {item}
-          </View>
+          <>
+            {headerElement || null}
+            <Text>{item}</Text>
+          </>
         );
       case ViewTypes.HEADER_WITH_SEPRATOR:
         return (
-          <View key={key} style={{ flex: 1 }}>
-            {this.headerElement || null}
+          <>
+            {headerElement || null}
             {item}
-            {this.separatorElement || null}
-          </View>
+            {separatorElement || null}
+          </>
         );
       case ViewTypes.FOOTER:
         return (
-          <View key={key} style={{ flex: 1 }}>
+          <>
             {item}
-            {this.footerElement || null}
-          </View>
+            {footerElement || null}
+          </>
         );
       case ViewTypes.FULL_WITH_SEPRATOR:
         return (
-          <View key={key} style={{ flex: 1 }}>
+          <>
             {item}
-            {this.separatorElement || null}
-          </View>
+            {separatorElement || null}
+          </>
         );
       case ViewTypes.FULL:
         return (
-          <View key={key} style={{ flex: 1 }}>
+          <>
             {item}
-          </View>
+          </>
         );
       case ViewTypes.EMPTY:
         return (
-          <View key={key} style={{ flex: 1 }}>
-            {this.emptyElement || null}
-          </View>
+          <>
+            {emptyElement || null}
+          </>
         );
       default:
         return null;
     }
-  }
+  }, []);
 
-  render() {
-    const {
-      props: {
-        keyboardShouldPersistTaps,
-        keyboardDismissMode,
-        style,
-        contentContainerStyle,
-        refreshing,
-        onRefresh,
-        onEndReached,
-        onEndReachedThreshold,
-      },
-    } = this;
-
-    return (
-      <RecyclerListView
-        scrollViewProps={{
-          keyboardShouldPersistTaps,
-          keyboardDismissMode,
-          contentContainerStyle,
-          refreshControl: (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          ),
-        }}
-        layoutProvider={this._layoutProvider()}
-        dataProvider={this.state.dataProvider}
-        rowRenderer={this._rowRenderer}
-        style={style}
-        onEndReached={onEndReached}
-        onEndReachedThreshold={onEndReachedThreshold}
-      />
-    );
-  }
-}
+  return (
+    <RecyclerListView
+      {...recyclerListViewProps}
+      scrollViewProps={{
+        ...scrollViewProps,
+        refreshControl: (
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        ),
+      }}
+      layoutProvider={_layoutProvider()}
+      dataProvider={dataProvider}
+      rowRenderer={_rowRenderer}
+    />
+  );
+};
 
 RecyclerListViewWrapper.propTypes = {
   // eslint-disable-next-line react/no-unused-prop-types
@@ -263,7 +235,7 @@ RecyclerListViewWrapper.propTypes = {
    *
    * Where `type` is key of ViewTypes
    */
-  keyExtractor: PropTypes.func,
+  // keyExtractor: PropTypes.func,
 
   /**
    * Takes an item from data and renders it into the list. Typical usage:
@@ -282,72 +254,24 @@ RecyclerListViewWrapper.propTypes = {
   renderItem: PropTypes.func.isRequired,
 
   /**
-   * Determines when the keyboard should stay visible after a tap.
-   * - 'never' (the default), tapping outside of the focused text input when the keyboard is up dismisses the keyboard. When this happens, children won't receive the tap.
-   * - 'always', the keyboard will not dismiss automatically, and the scroll view will not catch taps, but children of the scroll view can catch taps.
-   * - 'handled', the keyboard will not dismiss automatically when the tap was handled by a children, (or captured by an ancestor).
-   * - false, deprecated, use 'never' instead
-   * - true, deprecated, use 'always' instead
-   */
-  keyboardShouldPersistTaps: PropTypes.oneOf(["always", "never", "handled"]),
-
-  /**
-   * Determines whether the keyboard gets dismissed in response to a drag.
-   *   - 'none' (the default), drags do not dismiss the keyboard.
-   *   - 'on-drag', the keyboard is dismissed when a drag begins.
-   */
-  keyboardDismissMode: PropTypes.oneOf(["none", "interactive", "on-drag"]),
-
-  /**
    * Rendered at the very beginning of the list.
    */
-  ListHeaderComponent: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.element,
-  ]),
+  ListHeaderComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.element]),
 
   /**
    * Rendered at the very end of the list.
    */
-  ListFooterComponent: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.element,
-  ]),
+  ListFooterComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.element]),
 
   /**
    * Rendered when the list is empty.
    */
-  ListEmptyComponent: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.element,
-  ]),
+  ListEmptyComponent: PropTypes.oneOfType([PropTypes.func, PropTypes.element]),
 
   /**
    * Rendered in between adjacent Items within each section.
    */
   ItemSeparatorComponent: PropTypes.func,
-
-  /**
-   * Style
-   */
-  style: ViewPropTypes.style,
-
-  /**
-   * These styles will be applied to the scroll view content container which
-   * wraps all of the child views. Example:
-   *
-   *   return (
-   *     <ScrollView contentContainerStyle={styles.contentContainer}>
-   *     </ScrollView>
-   *   );
-   *   ...
-   *   const styles = StyleSheet.create({
-   *     contentContainer: {
-   *       paddingVertical: 20
-   *     }
-   *   });
-   */
-  contentContainerStyle: ViewPropTypes.style,
 
   // Provide this method if you want to define specific width/height of an item.
   // this function will provide type and index of an element
@@ -373,16 +297,9 @@ RecyclerListViewWrapper.propTypes = {
   refreshing: PropTypes.bool,
 
   /**
-   * Called when all rows have been rendered and the list has been scrolled
-   * to within onEndReachedThreshold of the bottom.  The native scroll
-   * event is provided.
+   * RecyclerListView props
    */
-  onEndReached: PropTypes.func,
-
-  /**
-   * Threshold in pixels for onEndReached.
-   */
-  onEndReachedThreshold: PropTypes.number,
+  recyclerListViewProps: PropTypes.object.isRequired,
 };
 
 RecyclerListViewWrapper.defaultProps = {
@@ -390,15 +307,11 @@ RecyclerListViewWrapper.defaultProps = {
   ListFooterComponent: null,
   ListEmptyComponent: null,
   ItemSeparatorComponent: null,
-  keyboardShouldPersistTaps: "never",
-  keyboardDismissMode: "none",
-  style: null,
-  contentContainerStyle: null,
   setElementDimensions: () => {},
-  keyExtractor: () => {},
+  // keyExtractor: () => {},
   extraData: null,
   onRefresh: () => {},
   refreshing: false,
-  onEndReached: () => {},
-  onEndReachedThreshold: 0,
 };
+
+export default RecyclerListViewWrapper;
