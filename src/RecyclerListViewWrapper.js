@@ -4,7 +4,7 @@
  */
 import React from "react";
 import PropTypes from "prop-types";
-import { RefreshControl } from "react-native";
+import { RefreshControl, View } from "react-native";
 import {
   RecyclerListView,
   DataProvider,
@@ -12,12 +12,11 @@ import {
 } from "recyclerlistview"; // 1.1.0
 
 export const ViewTypes = {
-  FULL: 0,
-  FULL_WITH_SEPRATOR: 1,
-  HEADER: 2,
-  HEADER_WITH_SEPRATOR: 3,
-  FOOTER: 4,
-  EMPTY: 5,
+  FULL: "FULL",
+  FULL_WITH_SEPRATOR: "FULL_WITH_SEPRATOR",
+  FULL_WITH_HEADER: "FULL_WITH_HEADER",
+  FULL_WITH_HEADER_WITH_SEPRATOR: "FULL_WITH_HEADER_WITH_SEPRATOR",
+  FULL_WITH_FOOTER: "FULL_WITH_FOOTER",
 };
 
 /***
@@ -27,7 +26,7 @@ const RecyclerListViewWrapper = ({
   data = [],
   extraData,
   recyclerListViewProps = {},
-  recyclerListViewProps: { scrollViewProps = {} } = {},
+  recyclerListViewProps: { style = {}, scrollViewProps = {} } = {},
   refreshing,
   onRefresh,
   ListHeaderComponent,
@@ -38,6 +37,12 @@ const RecyclerListViewWrapper = ({
   renderItem,
   // keyExtractor,
 }) => {
+  const itemsCount = data.length;
+  //  console.log("RLVW data")
+  //  console.log(itemsCount)
+  // console.log(data)
+  // console.log("RLVW extraData")
+  // console.log(extraData)
   // let { width } = Dimensions.get("window");
 
   //Create the data provider and provide method which takes in two rows of data and return if those two are different or not.
@@ -51,7 +56,6 @@ const RecyclerListViewWrapper = ({
   const [dataProvider, setDataProvider] = React.useState(
     dataProviderInstance.cloneWithRows(data)
   );
-  const [itemsCount, setItemsCount] = React.useState(data.length);
 
   let headerElement = null;
   if (ListHeaderComponent) {
@@ -89,14 +93,15 @@ const RecyclerListViewWrapper = ({
     );
   }
 
-  React.useEffect(
-    () => {
-      //Since component should always render once data has changed, make data provider part of the state
-      setDataProvider(dataProviderInstance.cloneWithRows(data));
-      setItemsCount(data.length);
-    },
-    [data, extraData]
-  );
+  React.useEffect(() => {
+    // console.log("RLVW new data");
+    // console.log(itemsCount);
+    // console.log(data)
+    // console.log("RLVW new extraData")
+    // console.log(extraData)
+    //Since component should always render once data has changed, make data provider part of the state
+    setDataProvider(dataProviderInstance.cloneWithRows(data));
+  }, [data, extraData, itemsCount]);
 
   //Create the layout provider
   //First method: Given an index return the type of item e.g ListItemType1, ListItemType2 in case you have variety of items in your list/grid
@@ -109,18 +114,15 @@ const RecyclerListViewWrapper = ({
       (index) => {
         let isFirst = index == 0;
         let isLast = index + 1 == itemsCount;
-        let isEmpty = !itemsCount;
         let isHeader = isFirst;
         let isFooter = isLast;
         let isSeparator = !isLast;
-        if (isEmpty) {
-          return ViewTypes.EMPTY;
-        } else if (isHeader && isSeparator) {
-          return ViewTypes.HEADER_WITH_SEPRATOR;
+        if (isHeader && isSeparator) {
+          return ViewTypes.FULL_WITH_HEADER_WITH_SEPRATOR;
         } else if (isHeader) {
-          return ViewTypes.HEADER;
+          return ViewTypes.FULL_WITH_HEADER;
         } else if (isFooter) {
-          return ViewTypes.FOOTER;
+          return ViewTypes.FULL_WITH_FOOTER;
         } else if (isSeparator) {
           return ViewTypes.FULL_WITH_SEPRATOR;
         } else {
@@ -142,67 +144,75 @@ const RecyclerListViewWrapper = ({
         }
       }
     );
-  }, []);
+  }, [itemsCount, setElementDimensions]);
 
   //Given type and data return the view component
-  const _rowRenderer = React.useCallback((type, rowData, index) => {
-    //You can return any view here, CellContainer has no special significance
-    const item = renderItem({ item: data[index], index, type }) || null;
-    // console.log(rowData);
-    // const key =
-    //   typeof keyExtractor === "function"
-    //     ? keyExtractor(data[index], index, type)
-    //     : data[index].key || item.key || index;
-    switch (type) {
-      case ViewTypes.HEADER:
-        return (
-          <>
-            {headerElement || null}
-            {item}
-          </>
-        );
-      case ViewTypes.HEADER_WITH_SEPRATOR:
-        return (
-          <>
-            {headerElement || null}
-            {item}
-            {separatorElement || null}
-          </>
-        );
-      case ViewTypes.FOOTER:
-        return (
-          <>
-            {item}
-            {footerElement || null}
-          </>
-        );
-      case ViewTypes.FULL_WITH_SEPRATOR:
-        return (
-          <>
-            {item}
-            {separatorElement || null}
-          </>
-        );
-      case ViewTypes.FULL:
-        return (
-          <>
-            {item}
-          </>
-        );
-      case ViewTypes.EMPTY:
-        return (
-          <>
-            {emptyElement || null}
-          </>
-        );
-      default:
-        return null;
-    }
-  }, []);
+  const _rowRenderer = React.useCallback(
+    (type, rowData, index) => {
+      //You can return any view here, CellContainer has no special significance
+      const item = renderItem({ item: rowData, index, type }) || null;
+      // console.log("rowData")
+      // console.log(rowData)
+      // const key =
+      //   typeof keyExtractor === "function"
+      //     ? keyExtractor(data[index], index, type)
+      //     : data[index].key || item.key || index;
+      switch (type) {
+        case ViewTypes.FULL_WITH_HEADER:
+          return (
+            <View style={{ flex: 1 }}>
+              {headerElement || null}
+              {item}
+            </View>
+          );
+        case ViewTypes.FULL_WITH_HEADER_WITH_SEPRATOR:
+          return (
+            <View style={{ flex: 1 }}>
+              {headerElement || null}
+              {item}
+              {separatorElement || null}
+            </View>
+          );
+        case ViewTypes.FULL_WITH_FOOTER:
+          return (
+            <View style={{ flex: 1 }}>
+              {item}
+              {footerElement || null}
+            </View>
+          );
+        case ViewTypes.FULL_WITH_SEPRATOR:
+          return (
+            <View style={{ flex: 1 }}>
+              {item}
+              {separatorElement || null}
+            </View>
+          );
+        case ViewTypes.FULL:
+          return <View style={{ flex: 1 }}>{item}</View>;
+        default:
+          return null;
+      }
+    },
+    [renderItem, headerElement, footerElement, separatorElement]
+  );
+
+  // should render recyclerlist view if not data
+  // as per its recommendations
+  if (!itemsCount) {
+    return (
+      <View style={{ flex: 1 }}>
+        {headerElement || null}
+        {emptyElement || null}
+        {footerElement || null}
+      </View>
+    );
+  }
 
   return (
     <RecyclerListView
       {...recyclerListViewProps}
+      style={{ ...style, minHeight: 1, minWidth: 1 }}
+      forceNonDeterministicRendering
       scrollViewProps={{
         ...scrollViewProps,
         refreshControl: (
@@ -222,7 +232,7 @@ RecyclerListViewWrapper.propTypes = {
   /**
    * data is just a plain array.
    */
-  data: PropTypes.array.isRequired,
+  data: PropTypes.any.isRequired,
 
   /**
    * Used to extract a unique key for a given item at the specified index. Key is used for caching
@@ -299,7 +309,7 @@ RecyclerListViewWrapper.propTypes = {
   /**
    * RecyclerListView props
    */
-  recyclerListViewProps: PropTypes.object.isRequired,
+  recyclerListViewProps: PropTypes.object,
 };
 
 RecyclerListViewWrapper.defaultProps = {
@@ -312,6 +322,7 @@ RecyclerListViewWrapper.defaultProps = {
   extraData: null,
   onRefresh: () => {},
   refreshing: false,
+  recyclerListViewProps: {},
 };
 
 export default RecyclerListViewWrapper;
